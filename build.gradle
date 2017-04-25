@@ -1,6 +1,7 @@
 def nowDate = new Date()
 def nowFormattedDate = nowDate.format("yyyy-MM-dd/HH:mm:ss")
 def vendorName = "greetgo!"
+def ggRepo = System.getenv('GG_REPO')
 
 apply plugin: 'java'
 apply plugin: 'maven'
@@ -14,12 +15,12 @@ targetCompatibility = 1.8
 group = "kz.greetgo.learn.migration"
 
 dependencies {
-    ext.findbugsVersion = "2.0.1"
+  ext.findbugsVersion = "2.0.1"
 
-    testCompile "org.testng:testng:6.5.1"
-    testCompile "org.easytesting:fest-assert-core:2.0M10"
+  testCompile "org.testng:testng:6.5.1"
+  testCompile "org.easytesting:fest-assert-core:2.0M10"
 
-    compile "com.google.code.findbugs:annotations:$findbugsVersion"
+  compile "com.google.code.findbugs:annotations:$findbugsVersion"
 }
 
 jar {
@@ -27,6 +28,12 @@ jar {
     attributes 'Implementation-Title': project.name, 'Implementation-Version': version,
         'Implementation-Vendor': vendorName, 'Built-By': System.getProperty("user.name"), 'Built-At': nowFormattedDate
   }
+}
+
+repositories {
+  mavenLocal()
+  if (ggRepo != null && ggRepo.length() > 0) maven { url ggRepo }
+  mavenCentral()
 }
 
 sourceSets {
