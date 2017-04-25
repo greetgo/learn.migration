@@ -1,6 +1,8 @@
 package kz.greetgo.learn.migration.__prepare__;
 
-public class PrepareDb {
+import kz.greetgo.learn.migration.__prepare__.core.DbWorker;
+
+public class PrepareOperDb {
   public static void main(String[] args) throws Exception {
     DbWorker dbWorker = new DbWorker();
 
@@ -8,5 +10,7 @@ public class PrepareDb {
 
     dbWorker.dropOperDb();
     dbWorker.createOperDb();
+
+    dbWorker.createMigrationSourceDb();
   }
 }

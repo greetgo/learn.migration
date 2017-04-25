@@ -1,4 +1,4 @@
-package kz.greetgo.learn.migration.__prepare__;
+package kz.greetgo.learn.migration.__prepare__.core;
 
 import kz.greetgo.learn.migration.util.ConfigData;
 import kz.greetgo.learn.migration.util.ConfigFiles;
@@ -55,9 +55,12 @@ public class DbWorker {
   }
 
   public void dropOperDb() throws Exception {
+    dropDb(ConfigFiles.operDb());
+  }
 
+  private void dropDb(File configFile) throws Exception {
     ConfigData config = new ConfigData();
-    config.loadFromFile(ConfigFiles.operDb());
+    config.loadFromFile(configFile);
 
     String url = config.str("url");
     String dbName = DbAdminAccess.extractDbNameFrom(url);
@@ -79,8 +82,12 @@ public class DbWorker {
   }
 
   public void createOperDb() throws Exception {
+    createDb(ConfigFiles.operDb());
+  }
+
+  private void createDb(File configFile) throws Exception {
     ConfigData config = new ConfigData();
-    config.loadFromFile(ConfigFiles.operDb());
+    config.loadFromFile(configFile);
 
     String url = config.str("url");
     String user = config.str("user");
@@ -91,5 +98,13 @@ public class DbWorker {
       exec(connection, "create user " + user + " with encrypted password '" + password + "'");
       exec(connection, "create database " + dbName + " with owner " + user);
     }
+  }
+
+  public void createMigrationSourceDb() throws Exception {
+    createDb(ConfigFiles.migrationSourceDb());
+  }
+
+  public void dropMigrationSourceDb() throws Exception {
+    dropDb(ConfigFiles.migrationSourceDb());
   }
 }
