@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 
 public class FileUtils {
 
-  public static void setStrToFile(String content, File file) {
+  public static void setStrToFile(String content, File file) throws IOException {
 
     if (content == null) {
       file.delete();
@@ -18,8 +18,6 @@ public class FileUtils {
 
       fOut.write(content.getBytes(StandardCharsets.UTF_8));
 
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
   }
 

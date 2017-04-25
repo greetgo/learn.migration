@@ -20,6 +20,12 @@ public class DbAdminAccess {
     return url.substring(0, idx + 1) + db;
   }
 
+  public static String extractDbNameFrom(String url) {
+    int idx = url.lastIndexOf('/');
+    if (idx < 0) throw new IllegalArgumentException("Cannot extract db name from url = " + url);
+    return url.substring(idx + 1);
+  }
+
   private static String envOrDefault(String envKey, String defaultValue) {
     String value = System.getenv(envKey);
     if (value == null) return defaultValue;

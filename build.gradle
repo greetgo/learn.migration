@@ -21,6 +21,8 @@ dependencies {
   testCompile "org.easytesting:fest-assert-core:2.0M10"
 
   compile "com.google.code.findbugs:annotations:$findbugsVersion"
+
+  compile group: 'org.postgresql', name: 'postgresql', version: '42.0.0'
 }
 
 jar {
