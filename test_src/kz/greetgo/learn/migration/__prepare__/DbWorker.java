@@ -28,7 +28,7 @@ public class DbWorker {
     StringBuilder sb = new StringBuilder();
     sb.append("url=").append(DbAdminAccess.changeDb(DbAdminAccess.adminUrl(),
       System.getProperty("user.name") + "_" + db)).append('\n');
-    sb.append("user=").append(db).append('\n');
+    sb.append("user=").append(System.getProperty("user.name")).append('_').append(db).append('\n');
     sb.append("password=7777777\n");
 
     configFile.getParentFile().mkdirs();
@@ -46,20 +46,23 @@ public class DbWorker {
       DbAdminAccess.adminUrl(), DbAdminAccess.adminUserId(), DbAdminAccess.adminUserPassword());
   }
 
-  private static void exec(Connection connection, String sql) throws SQLException {
+  private void exec(Connection connection, String sql) throws SQLException {
     try (Statement statement = connection.createStatement()) {
       statement.execute(sql);
     }
+
+    info("EXECUTED SQL: " + sql);
   }
 
   public void dropOperDb() throws Exception {
 
     ConfigData config = new ConfigData();
-
     config.loadFromFile(ConfigFiles.operDb());
 
+    String url = config.str("url");
+    String dbName = DbAdminAccess.extractDbNameFrom(url);
+
     try (Connection connection = createAdminConnection()) {
-      String dbName = DbAdminAccess.extractDbNameFrom(config.str("url"));
 
       try {
         exec(connection, "drop database " + dbName);
@@ -72,6 +75,21 @@ public class DbWorker {
       } catch (PSQLException e) {
         info(e.getMessage());
       }
+    }
+  }
+
+  public void createOperDb() throws Exception {
+    ConfigData config = new ConfigData();
+    config.loadFromFile(ConfigFiles.operDb());
+
+    String url = config.str("url");
+    String user = config.str("user");
+    String password = config.str("password");
+    String dbName = DbAdminAccess.extractDbNameFrom(url);
+
+    try (Connection connection = createAdminConnection()) {
+      exec(connection, "create user " + user + " with encrypted password '" + password + "'");
+      exec(connection, "create database " + dbName + " with owner " + user);
     }
   }
 }

@@ -7,5 +7,6 @@ public class PrepareDb {
     dbWorker.prepareConfigFiles();
 
     dbWorker.dropOperDb();
+    dbWorker.createOperDb();
   }
 }
