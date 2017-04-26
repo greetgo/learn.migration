@@ -3,8 +3,10 @@ package kz.greetgo.learn.migration.core;
 import kz.greetgo.learn.migration.interfaces.ConnectionConfig;
 import kz.greetgo.learn.migration.util.ConnectionUtils;
 import kz.greetgo.learn.migration.util.TimeUtils;
+import org.xml.sax.SAXException;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -107,7 +109,7 @@ public class Migration implements Closeable {
     return portionSize;
   }
 
-  private int download() throws SQLException {
+  private int download() throws SQLException, IOException, SAXException {
 
     try (PreparedStatement ciaPS = ciaConnection.prepareStatement(
       "select * from migration_client where status='JUST_INSERTED' order by number limit ?")) {
@@ -139,7 +141,7 @@ public class Migration implements Closeable {
             operPS.setString(4, r.name);
             operPS.setString(5, r.patronymic);
             operPS.setDate(6, r.birthDate);
-            
+
             operPS.addBatch();
             batchSize++;
 

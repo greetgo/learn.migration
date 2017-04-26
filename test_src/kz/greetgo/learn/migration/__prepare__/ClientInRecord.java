@@ -18,7 +18,7 @@ public class ClientInRecord {
     sb.append("/>\n");
 
     if (birthDate != null) {
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+      SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
       sb.append("  <birth_date>").append(sdf.format(birthDate)).append("</birth_date>\n");
     }
 

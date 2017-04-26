@@ -4,6 +4,8 @@ import kz.greetgo.learn.migration.__prepare__.ClientInRecord;
 import kz.greetgo.learn.migration.util.RND;
 import org.testng.annotations.Test;
 
+import java.text.SimpleDateFormat;
+
 import static org.fest.assertions.api.Assertions.assertThat;
 
 public class ClientRecordTest {
@@ -11,6 +13,7 @@ public class ClientRecordTest {
   @Test
   public void parseRecordData() throws Exception {
     ClientInRecord in = new ClientInRecord();
+
     in.id = RND.str(10);
     in.surname = RND.str(10);
     in.name = RND.str(10);
@@ -24,6 +27,8 @@ public class ClientRecordTest {
     assertThat(record.surname).isEqualTo(in.surname);
     assertThat(record.name).isEqualTo(in.name);
     assertThat(record.patronymic).isEqualTo(in.patronymic);
-    assertThat(record.birthDate).isEqualTo(in.birthDate);
+    assertThat(record.birthDate).isNotNull();
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    assertThat(sdf.format(record.birthDate)).isEqualTo(sdf.format(in.birthDate));
   }
 }
