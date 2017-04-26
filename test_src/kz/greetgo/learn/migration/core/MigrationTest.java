@@ -12,6 +12,10 @@ public class MigrationTest {
     ConnectionConfig ciaCC = ConnectionUtils.fileToConnectionConfig(ConfigFiles.ciaDb());
 
     try (Migration migration = new Migration(operCC, ciaCC)) {
+
+      migration.portionSize = 100_000;
+      migration.uploadErrorsMaxBatchSize = 5_000;
+
       int count = migration.migrate();
       System.out.println("Migrated " + count + " records");
     }

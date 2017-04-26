@@ -29,7 +29,8 @@ public class GenerateCiaData {
   }
 
   private static final int MAX_STORING_ID_COUNT = 1_000_000;
-  private static final int MAX_BATCH_SIZE = 1000;
+  private static final int MAX_BATCH_SIZE = 50_000;
+  private static final long PING_MILLIS = 2500;
 
   void info(String message) {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -51,7 +52,7 @@ public class GenerateCiaData {
   private final Set<String> storingIdSet = new HashSet<>();
   private List<String> storingIdList = new ArrayList<>();
 
-  private void readStoringIds() {
+  private void loadStoringIds() {
     if (!storingIdsFile.exists()) return;
     storingIdList = Arrays.stream(FileUtils.fileToStr(storingIdsFile).split("\n"))
       .collect(Collectors.toList());
@@ -65,7 +66,7 @@ public class GenerateCiaData {
   }
 
   String tryAddToStore(String id) {
-    if (storingIdSet.size() >= MAX_STORING_ID_COUNT) return id;
+    if (storingIdSet.size() > MAX_STORING_ID_COUNT) return id;
     if (storingIdSet.contains(id)) return id;
     storingIdSet.add(id);
     storingIdList.add(id);
@@ -91,7 +92,7 @@ public class GenerateCiaData {
       while (workingFile.exists()) {
 
         try {
-          Thread.sleep(500);
+          Thread.sleep(PING_MILLIS);
         } catch (InterruptedException e) {
           break;
         }
@@ -107,9 +108,11 @@ public class GenerateCiaData {
     workingFile.createNewFile();
     see.start();
 
-    readStoringIds();
+    info("Work has begun");
 
-    List<String> newIds = new ArrayList<>();
+    loadStoringIds();
+
+    info("Storing ids loaded");
 
     connection.setAutoCommit(false);
 
@@ -125,7 +128,7 @@ public class GenerateCiaData {
 
           ClientInRecord r = new ClientInRecord();
           r.id = RND.bool(50) ? rndStoreId() : null;
-          if (r.id == null) newIds.add(r.id = RND.str(10));
+          if (r.id == null) r.id = tryAddToStore(RND.str(10));
           r.surname = RND.bool(4) ? null : RND.str(20);
           r.name = RND.bool(4) ? null : RND.str(20);
           r.patronymic = RND.bool(10) ? null : RND.str(20);
@@ -140,6 +143,7 @@ public class GenerateCiaData {
           if (batchSize >= MAX_BATCH_SIZE) {
             ps.executeBatch();
             connection.commit();
+            batchSize = 0;
           }
 
           if (show.get()) {
@@ -165,7 +169,6 @@ public class GenerateCiaData {
     } finally {
       connection.setAutoCommit(true);
     }
-    newIds.forEach(this::tryAddToStore);
 
     info("see.join();");
     see.join();
