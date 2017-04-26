@@ -12,7 +12,7 @@ public class ConfigFiles {
     return configFile("oper.db.properties");
   }
 
-  public static File migrationSourceDb() {
+  public static File ciaDb() {
     return configFile("migration_source.db.properties");
   }
 }

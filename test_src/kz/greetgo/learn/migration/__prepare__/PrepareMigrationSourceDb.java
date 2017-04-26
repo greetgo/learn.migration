@@ -13,6 +13,6 @@ public class PrepareMigrationSourceDb {
     dbWorker.dropMigrationSourceDb();
     dbWorker.createMigrationSourceDb();
 
-    dbWorker.applyDDL(ConfigFiles.migrationSourceDb(), CiaDDL.get());
+    dbWorker.applyDDL(ConfigFiles.ciaDb(), CiaDDL.get());
   }
 }

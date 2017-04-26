@@ -39,35 +39,11 @@ public class GenerateCiaData {
   Connection connection;
 
   private void execute() throws Exception {
-    try (Connection connection = DbWorker.createConnection(ConfigFiles.migrationSourceDb())) {
+    try (Connection connection = DbWorker.createConnection(ConfigFiles.ciaDb())) {
       this.connection = connection;
 
       prepareData();
 
-    }
-  }
-
-  private static class Record {
-    String id;
-    String surname, name, patronymic;
-    Date birthDate;
-
-    String toXml() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("<record id=\"").append(id).append("\">\n");
-      sb.append("  <names");
-      if (surname != null) sb.append(" surname=\"").append(surname).append("\"");
-      if (name != null) sb.append(" name=\"").append(name).append("\"");
-      if (patronymic != null) sb.append(" patronymic=\"").append(patronymic).append("\"");
-      sb.append("/>\n");
-
-      if (birthDate != null) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        sb.append("  <birth_date>").append(sdf.format(birthDate)).append("</birth_date>\n");
-      }
-
-      sb.append("</record>\n");
-      return sb.toString();
     }
   }
 
@@ -141,14 +117,13 @@ public class GenerateCiaData {
 
       try (PreparedStatement ps = connection.prepareStatement("insert into transition_client (record_data) values (?)")) {
 
-        int batchSize = 0, lastShowInserts = 0, inserts = 0;
+        int batchSize = 0, inserts = 0;
 
         long startedAt = System.nanoTime();
-        long lastShowAt = startedAt;
 
         while (working.get()) {
 
-          Record r = new Record();
+          ClientInRecord r = new ClientInRecord();
           r.id = RND.bool(50) ? rndStoreId() : null;
           if (r.id == null) newIds.add(r.id = RND.str(10));
           r.surname = RND.bool(4) ? null : RND.str(20);
@@ -160,7 +135,6 @@ public class GenerateCiaData {
           ps.setString(1, r.toXml());
           ps.addBatch();
           batchSize++;
-          lastShowInserts++;
           inserts++;
 
           if (batchSize >= MAX_BATCH_SIZE) {
@@ -174,9 +148,6 @@ public class GenerateCiaData {
 
             info(" -- Inserted records " + inserts + " for "
               + showTime(now, startedAt) + " - " + recordsPerSecond(inserts, now - startedAt));
-
-            lastShowInserts = 0;
-            lastShowAt = now;
           }
         }
 
@@ -204,8 +175,5 @@ public class GenerateCiaData {
     saveStoringIds();
 
     info("Finish");
-
   }
-
-
 }

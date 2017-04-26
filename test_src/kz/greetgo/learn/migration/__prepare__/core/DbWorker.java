@@ -16,7 +16,7 @@ public class DbWorker {
 
   public void prepareConfigFiles() throws IOException {
     prepareConfigDbFile(ConfigFiles.operDb(), "learn_migration");
-    prepareConfigDbFile(ConfigFiles.migrationSourceDb(), "learn_migration_source");
+    prepareConfigDbFile(ConfigFiles.ciaDb(), "learn_migration_source");
   }
 
   private void prepareConfigDbFile(File configFile, String db) throws IOException {
@@ -103,11 +103,11 @@ public class DbWorker {
   }
 
   public void createMigrationSourceDb() throws Exception {
-    createDb(ConfigFiles.migrationSourceDb());
+    createDb(ConfigFiles.ciaDb());
   }
 
   public void dropMigrationSourceDb() throws Exception {
-    dropDb(ConfigFiles.migrationSourceDb());
+    dropDb(ConfigFiles.ciaDb());
   }
 
   public void applyDDL(File configFile, DDL ddl) throws IOException, SQLException, ClassNotFoundException {
