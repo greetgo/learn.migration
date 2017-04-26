@@ -32,7 +32,7 @@ public class DbWorker {
     sb.append("password=7777777\n");
 
     configFile.getParentFile().mkdirs();
-    FileUtils.setStrToFile(sb.toString(), configFile);
+    FileUtils.putStrToFile(sb.toString(), configFile);
     info("Created file " + configFile);
   }
 
@@ -110,8 +110,8 @@ public class DbWorker {
     dropDb(ConfigFiles.migrationSourceDb());
   }
 
-  public void applyDDL(DDL ddl) throws IOException, SQLException, ClassNotFoundException {
-    try (Connection connection = createConnection(ConfigFiles.operDb())) {
+  public void applyDDL(File configFile, DDL ddl) throws IOException, SQLException, ClassNotFoundException {
+    try (Connection connection = createConnection(configFile)) {
       ddl.getDDL().stream()
         .map(FileUtils::fileToStr)
         .flatMap(s -> Arrays.stream(s.split(";;")))
@@ -121,7 +121,7 @@ public class DbWorker {
     }
   }
 
-  private Connection createConnection(File configFile) throws IOException, ClassNotFoundException, SQLException {
+  public static Connection createConnection(File configFile) throws IOException, ClassNotFoundException, SQLException {
     ConfigData configData = new ConfigData();
     configData.loadFromFile(configFile);
 

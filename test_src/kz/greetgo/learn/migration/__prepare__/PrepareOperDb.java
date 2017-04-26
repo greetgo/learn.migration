@@ -2,6 +2,7 @@ package kz.greetgo.learn.migration.__prepare__;
 
 import kz.greetgo.learn.migration.__prepare__.core.DbWorker;
 import kz.greetgo.learn.migration.__prepare__.db.oper.OperDDL;
+import kz.greetgo.learn.migration.util.ConfigFiles;
 
 public class PrepareOperDb {
   public static void main(String[] args) throws Exception {
@@ -12,6 +13,6 @@ public class PrepareOperDb {
     dbWorker.dropOperDb();
     dbWorker.createOperDb();
 
-    dbWorker.applyDDL(OperDDL.get());
+    dbWorker.applyDDL(ConfigFiles.operDb(), OperDDL.get());
   }
 }

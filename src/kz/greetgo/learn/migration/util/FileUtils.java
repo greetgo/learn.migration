@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 
 public class FileUtils {
 
-  public static void setStrToFile(String content, File file) throws IOException {
+  public static void putStrToFile(String content, File file) throws IOException {
 
     if (content == null) {
       file.delete();
