@@ -75,8 +75,10 @@ public class Migration implements Closeable {
 
     long startedAt = System.nanoTime();
     try (Statement statement = operConnection.createStatement()) {
-      statement.execute(executingSql);
-      info("EXECUTE SQL for " + showTime(System.nanoTime(), startedAt) + " : " + executingSql);
+      int updates = statement.executeUpdate(executingSql);
+      info("Updated " + updates
+        + " records for " + showTime(System.nanoTime(), startedAt)
+        + ", EXECUTED SQL : " + executingSql);
     } catch (SQLException e) {
       info("ERROR EXECUTE SQL for " + showTime(System.nanoTime(), startedAt)
         + ", message: " + e.getMessage() + ", SQL : " + executingSql);
@@ -84,17 +86,20 @@ public class Migration implements Closeable {
     }
   }
 
-  public int portionSize = 1_000_000, downloadMaxBatchSize = 50_000;
+  public int portionSize = 1_000_000;
+  public int downloadMaxBatchSize = 50_000;
+  public int uploadMaxBatchSize = 50_000;
   public int showStatusPingMillis = 5000;
-  public int uploadErrorsMaxBatchSize = downloadMaxBatchSize;
 
   private String tmpClientTable;
 
   public int migrate() throws Exception {
+    long startedAt = System.nanoTime();
 
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
     Date nowDate = new Date();
     tmpClientTable = "cia_migration_client_" + sdf.format(nowDate);
+    info("TMP_CLIENT = " + tmpClientTable);
 
     createOperConnection();
 
@@ -116,9 +121,21 @@ public class Migration implements Closeable {
 
     int portionSize = download();
 
+    {
+      long now = System.nanoTime();
+      info("Downloaded of portion " + portionSize + " finished for " + TimeUtils.showTime(now, startedAt));
+    }
+
+    if (portionSize == 0) return 0;
+
     closeCiaConnection();
 
-    innerMigrate();
+    migrateFromTmp();
+
+    {
+      long now = System.nanoTime();
+      info("Migration of portion " + portionSize + " finished for " + TimeUtils.showTime(now, startedAt));
+    }
 
     return portionSize;
   }
@@ -130,7 +147,6 @@ public class Migration implements Closeable {
   private void createCiaConnection() throws Exception {
     ciaConnection = ConnectionUtils.create(ciaConfig);
   }
-
 
   private int download() throws SQLException, IOException, SAXException {
 
@@ -153,7 +169,6 @@ public class Migration implements Closeable {
 
     });
     see.start();
-
 
     try (PreparedStatement ciaPS = ciaConnection.prepareStatement(
       "select * from transition_client where status='JUST_INSERTED' order by number limit ?")) {
@@ -236,7 +251,7 @@ public class Migration implements Closeable {
 
 
   private void uploadAndDropErrors() throws Exception {
-    info("uploadAndDropErrors goes");
+    info("uploadAndDropErrors goes : maxBatchSize = " + uploadMaxBatchSize);
 
     final AtomicBoolean working = new AtomicBoolean(true);
 
@@ -285,7 +300,7 @@ public class Migration implements Closeable {
               batchSize++;
               recordsCount++;
 
-              if (batchSize >= uploadErrorsMaxBatchSize) {
+              if (batchSize >= uploadMaxBatchSize) {
                 outPS.executeBatch();
                 ciaConnection.commit();
                 batchSize = 0;
@@ -323,7 +338,93 @@ public class Migration implements Closeable {
     exec("delete from TMP_CLIENT where error is not null");
   }
 
-  private void innerMigrate() throws Exception {
+  private void uploadAllOk() throws Exception {
+
+    info("uploadAllOk goes: maxBatchSize = " + uploadMaxBatchSize);
+
+    final AtomicBoolean working = new AtomicBoolean(true);
+
+    createCiaConnection();
+    ciaConnection.setAutoCommit(false);
+    try {
+
+      try (PreparedStatement inPS = operConnection.prepareStatement(r("select number from TMP_CLIENT"))) {
+
+        info("Prepared statement for : select number from TMP_CLIENT");
+
+        try (ResultSet inRS = inPS.executeQuery()) {
+          info("Query executed for : select number from TMP_CLIENT");
+
+          try (PreparedStatement outPS = ciaConnection.prepareStatement(
+            "update transition_client set status = 'OK' where number = ?")) {
+
+            int batchSize = 0, recordsCount = 0;
+
+            final AtomicBoolean showStatus = new AtomicBoolean(false);
+
+            new Thread(() -> {
+
+              while (true) {
+
+                if (!working.get()) break;
+
+                try {
+                  Thread.sleep(showStatusPingMillis);
+                } catch (InterruptedException e) {
+                  break;
+                }
+
+                showStatus.set(true);
+              }
+
+            }).start();
+
+            long startedAt = System.nanoTime();
+
+            while (inRS.next()) {
+
+              outPS.setLong(1, inRS.getLong("number"));
+              outPS.addBatch();
+              batchSize++;
+              recordsCount++;
+
+              if (batchSize >= uploadMaxBatchSize) {
+                outPS.executeBatch();
+                ciaConnection.commit();
+                batchSize = 0;
+              }
+
+              if (showStatus.get()) {
+                showStatus.set(false);
+
+                long now = System.nanoTime();
+                info(" -- uploaded ok records " + recordsCount + " for " + TimeUtils.showTime(now, startedAt)
+                  + " : " + TimeUtils.recordsPerSecond(recordsCount, now - startedAt));
+              }
+            }
+
+            if (batchSize > 0) {
+              outPS.executeBatch();
+              ciaConnection.commit();
+            }
+
+            {
+              long now = System.nanoTime();
+              info("TOTAL Uploaded ok records " + recordsCount + " for " + TimeUtils.showTime(now, startedAt)
+                + " : " + TimeUtils.recordsPerSecond(recordsCount, now - startedAt));
+            }
+          }
+        }
+      }
+
+    } finally {
+      closeCiaConnection();
+      working.set(false);
+    }
+
+  }
+
+  private void migrateFromTmp() throws Exception {
 
     //language=PostgreSQL
     exec("update TMP_CLIENT set error = 'surname is not defined'\n" +
@@ -337,5 +438,45 @@ public class Migration implements Closeable {
 
     uploadAndDropErrors();
 
+    //language=PostgreSQL
+    exec("with num_ord as (\n" +
+      "  select number, cia_id, row_number() over(partition by cia_id order by number desc) as ord \n" +
+      "  from TMP_CLIENT\n" +
+      ")\n" +
+      "\n" +
+      "update TMP_CLIENT set status = 2\n" +
+      "where status = 0 and number in (select number from num_ord where ord > 1)");
+
+    //language=PostgreSQL
+    exec("update TMP_CLIENT t set client_id = c.id\n" +
+      "  from client c\n" +
+      "  where c.cia_id = t.cia_id\n");
+
+    //language=PostgreSQL
+    exec("update TMP_CLIENT set status = 3 where client_id is not null");
+
+    //language=PostgreSQL
+    exec("update TMP_CLIENT set client_id = nextval('s_client') where status = 0");
+
+    //language=PostgreSQL
+    exec("insert into client (id, cia_id, surname, \"name\", patronymic, birth_date)\n" +
+      "select client_id, cia_id, surname, \"name\", patronymic, birth_date\n" +
+      "from TMP_CLIENT where status = 0");
+
+    //language=PostgreSQL
+    exec("update client c set surname = s.surname\n" +
+      "                 , \"name\" = s.\"name\"\n" +
+      "                 , patronymic = s.patronymic\n" +
+      "                 , birth_date = s.birth_date\n" +
+      "from TMP_CLIENT s\n" +
+      "where c.id = s.client_id\n" +
+      "and s.status = 3");
+
+    //language=PostgreSQL
+    exec("update client set actual = 1 where id in (\n" +
+      "  select client_id from TMP_CLIENT where status = 0\n" +
+      ")");
+
+    uploadAllOk();
   }
 }
