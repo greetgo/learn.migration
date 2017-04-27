@@ -25,4 +25,15 @@ public class ClientInRecord {
     sb.append("</record>\n");
     return sb.toString();
   }
+
+  public static void main(String[] args) {
+    ClientInRecord r = new ClientInRecord();
+    r.id = "asd";
+    r.surname = "asd";
+    r.name = "asd";
+    r.patronymic = "asd";
+    r.birthDate = new Date();
+
+    System.out.println(r.toXml());
+  }
 }
