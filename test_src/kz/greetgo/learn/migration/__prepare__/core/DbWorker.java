@@ -102,11 +102,11 @@ public class DbWorker {
     }
   }
 
-  public void createMigrationSourceDb() throws Exception {
+  public void createCiaDb() throws Exception {
     createDb(ConfigFiles.ciaDb());
   }
 
-  public void dropMigrationSourceDb() throws Exception {
+  public void dropCiaDb() throws Exception {
     dropDb(ConfigFiles.ciaDb());
   }
 

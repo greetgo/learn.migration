@@ -53,3 +53,31 @@ sourceSets {
 
 //noinspection GroovyMissingReturnStatement
 test { useTestNG() }
+
+task launchMigration(type: JavaExec, group: 'launch') {
+  main = 'kz.greetgo.learn.migration.core.LaunchMigration'
+  args = []
+
+  classpath { [sourceSets.main.runtimeClasspath, sourceSets.test.runtimeClasspath] }
+}
+
+task generateCiaData(type: JavaExec, group: 'launch') {
+  main = 'kz.greetgo.learn.migration.__prepare__.GenerateCiaData'
+  args = ["250_000"]
+
+  classpath { [sourceSets.main.runtimeClasspath, sourceSets.test.runtimeClasspath] }
+}
+
+task dropCreateOperDb(type: JavaExec, group: 'launch') {
+  main = 'kz.greetgo.learn.migration.__prepare__.DropCreateOperDb'
+  args = []
+
+  classpath { [sourceSets.main.runtimeClasspath, sourceSets.test.runtimeClasspath] }
+}
+
+task dropCreateCiaDb(type: JavaExec, group: 'launch') {
+  main = 'kz.greetgo.learn.migration.__prepare__.DropCreateCiaDb'
+  args = []
+
+  classpath { [sourceSets.main.runtimeClasspath, sourceSets.test.runtimeClasspath] }
+}

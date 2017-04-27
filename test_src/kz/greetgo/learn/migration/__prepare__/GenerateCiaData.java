@@ -25,8 +25,16 @@ import static kz.greetgo.learn.migration.util.TimeUtils.showTime;
 
 public class GenerateCiaData {
   public static void main(String[] args) throws Exception {
-    new GenerateCiaData().execute();
+    GenerateCiaData gcd = new GenerateCiaData();
+
+    if (args.length >= 1) {
+      gcd.finishCount = Integer.parseInt(args[0].replaceAll("_", ""));
+    }
+
+    gcd.execute();
   }
+
+  public Integer finishCount = null;
 
   private static final int MAX_STORING_ID_COUNT = 1_000_000;
   private static final int MAX_BATCH_SIZE = 50_000;
@@ -89,7 +97,7 @@ public class GenerateCiaData {
 
     final Thread see = new Thread(() -> {
 
-      while (workingFile.exists()) {
+      while (workingFile.exists() && working.get()) {
 
         try {
           Thread.sleep(PING_MILLIS);
@@ -102,7 +110,7 @@ public class GenerateCiaData {
       }
 
       working.set(false);
-
+      workingFile.delete();
     });
 
     workingFile.createNewFile();
@@ -121,7 +129,6 @@ public class GenerateCiaData {
       try (PreparedStatement ps = connection.prepareStatement("insert into transition_client (record_data) values (?)")) {
 
         int batchSize = 0, inserts = 0;
-
         long startedAt = System.nanoTime();
 
         while (working.get()) {
@@ -153,6 +160,11 @@ public class GenerateCiaData {
             info(" -- Inserted records " + inserts + " for "
               + showTime(now, startedAt) + " - " + recordsPerSecond(inserts, now - startedAt));
           }
+
+          if (finishCount != null && inserts >= finishCount) {
+            working.set(false);
+            break;
+          }
         }
 
         if (batchSize > 0) {
@@ -170,6 +182,8 @@ public class GenerateCiaData {
       connection.setAutoCommit(true);
     }
 
+    info("see.interrupt();");
+    see.interrupt();
     info("see.join();");
     see.join();
 
