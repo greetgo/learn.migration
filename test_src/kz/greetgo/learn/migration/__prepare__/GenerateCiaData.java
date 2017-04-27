@@ -1,5 +1,6 @@
 package kz.greetgo.learn.migration.__prepare__;
 
+import kz.greetgo.learn.migration.__prepare__.core.ClientInRecord;
 import kz.greetgo.learn.migration.__prepare__.core.DbWorker;
 import kz.greetgo.learn.migration.util.ConfigFiles;
 import kz.greetgo.learn.migration.util.FileUtils;

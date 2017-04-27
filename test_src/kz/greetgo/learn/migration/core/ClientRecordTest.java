@@ -1,6 +1,6 @@
 package kz.greetgo.learn.migration.core;
 
-import kz.greetgo.learn.migration.__prepare__.ClientInRecord;
+import kz.greetgo.learn.migration.__prepare__.core.ClientInRecord;
 import kz.greetgo.learn.migration.util.RND;
 import org.testng.annotations.Test;
 

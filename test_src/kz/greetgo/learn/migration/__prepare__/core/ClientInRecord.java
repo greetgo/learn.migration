@@ -1,4 +1,4 @@
-package kz.greetgo.learn.migration.__prepare__;
+package kz.greetgo.learn.migration.__prepare__.core;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
