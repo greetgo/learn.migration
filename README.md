@@ -20,6 +20,8 @@
    https://tecadmin.net/install-oracle-java-8-ubuntu-via-ppa/
  
  - ну и установка gradle хорошо описана здесь : https://gradle.org/install
+ 
+ - sudo apt-get install git 
 
 Корректную установку ПО можно проверить запуском в консоле команды:
 
