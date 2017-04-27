@@ -453,7 +453,7 @@ public class Migration implements Closeable {
       "  where c.cia_id = t.cia_id\n");
 
     //language=PostgreSQL
-    exec("update TMP_CLIENT set status = 3 where client_id is not null");
+    exec("update TMP_CLIENT set status = 3 where client_id is not null and status = 0");
 
     //language=PostgreSQL
     exec("update TMP_CLIENT set client_id = nextval('s_client') where status = 0");

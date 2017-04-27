@@ -28,10 +28,10 @@ public class ClientInRecord {
 
   public static void main(String[] args) {
     ClientInRecord r = new ClientInRecord();
-    r.id = "asd";
-    r.surname = "asd";
-    r.name = "asd";
-    r.patronymic = "asd";
+    r.id = "ID";
+    r.surname = "Surname";
+    r.name = "Pat";
+    r.patronymic = "Pat";
     r.birthDate = new Date();
 
     System.out.println(r.toXml());

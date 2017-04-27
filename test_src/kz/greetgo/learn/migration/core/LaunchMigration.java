@@ -30,6 +30,7 @@ public class LaunchMigration {
       while (true) {
         int count = migration.migrate();
         if (count == 0) break;
+        if (count > 0) break;
         if (!file.exists()) break;
         System.out.println("Migrated " + count + " records");
         System.out.println("------------------------------------------------------------------");
